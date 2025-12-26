@@ -44,7 +44,7 @@ dependencies {
 	annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
 	implementation "org.springdoc:springdoc-openapi-ui:${openApiVersion}"
-	implementation "org.springdoc:springdoc-openapi-webflux-ui:${openApiVersion}"
+	implementation 'io.github.cdimascio:dotenv-java:2.2.4'
 }
 
 tasks.named('test') {
