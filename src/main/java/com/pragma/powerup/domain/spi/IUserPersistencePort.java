@@ -6,4 +6,5 @@ public interface IUserPersistencePort {
     void saveUser(UserModel userModel);
     boolean existsByEmail(String email);
     boolean existsByIdDocument(String idDocument);
+    UserModel getUser(Long id);
 }

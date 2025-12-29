@@ -43,4 +43,13 @@ public class UserUseCase implements IUserServicePort {
             throw new DomainException("Email is already registered.");
         }
     }
+
+    @Override
+    public UserModel getUser(Long id) {
+        UserModel user = userPersistencePort.getUser(id);
+        if (user == null) {
+            throw new DomainException("User not found with ID: " + id);
+        }
+        return user;
+    }
 }
