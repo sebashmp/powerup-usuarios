@@ -3,6 +3,7 @@ package com.pragma.powerup.domain.usecase;
 import com.pragma.powerup.domain.api.IUserServicePort;
 import com.pragma.powerup.domain.exception.DomainException; // Crea esta clase
 import com.pragma.powerup.domain.model.UserModel;
+import com.pragma.powerup.domain.spi.IRolePersistencePort;
 import com.pragma.powerup.domain.spi.IUserPersistencePort;
 import java.time.LocalDate;
 import java.time.Period;
@@ -10,13 +11,16 @@ import java.time.Period;
 public class UserUseCase implements IUserServicePort {
 
     private final IUserPersistencePort userPersistencePort;
+    private final IRolePersistencePort rolePersistencePort;
 
-    public UserUseCase(IUserPersistencePort userPersistencePort) {
+    public UserUseCase(IUserPersistencePort userPersistencePort, IRolePersistencePort rolePersistencePort) {
         this.userPersistencePort = userPersistencePort;
+        this.rolePersistencePort = rolePersistencePort;
     }
 
     @Override
     public void saveOwner(UserModel userModel) {
+        userModel.setRole(rolePersistencePort.getRoleById(2L));
         validateOwnerRules(userModel);
         userPersistencePort.saveUser(userModel);
     }
