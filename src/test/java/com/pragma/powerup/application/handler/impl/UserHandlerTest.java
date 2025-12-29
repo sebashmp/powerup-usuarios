@@ -22,8 +22,6 @@ class UserHandlerTest {
     private IUserServicePort userServicePort;
     @Mock
     private IUserRequestMapper userRequestMapper;
-    @Mock
-    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserHandler userHandler;
@@ -39,15 +37,11 @@ class UserHandlerTest {
         userModel.setPassword("plainTextPassword");
 
         when(userRequestMapper.toModel(any(UserRequestDto.class))).thenReturn(userModel);
-        when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
 
         // Act
         userHandler.saveOwner(dto);
 
         // Assert
-        verify(passwordEncoder).encode("plainTextPassword");
-        verify(userServicePort).saveOwner(argThat(model ->
-                model.getPassword().equals("encodedPassword")
-        ));
+        verify(userServicePort).saveOwner(userModel);
     }
 }

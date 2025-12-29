@@ -17,13 +17,10 @@ public class UserHandler implements IUserHandler {
 
     private final IUserServicePort userServicePort;
     private final IUserRequestMapper userRequestMapper;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void saveOwner(UserRequestDto userRequestDto) {
         UserModel userModel = userRequestMapper.toModel(userRequestDto);
-        userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
-
         userServicePort.saveOwner(userModel);
     }
 }
