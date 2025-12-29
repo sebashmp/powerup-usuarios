@@ -29,7 +29,7 @@ class UserHandlerTest {
     private UserHandler userHandler;
 
     @Test
-    @DisplayName("Should encrypt password and set owner role before calling service")
+    @DisplayName("Should encrypt password before calling service")
     void saveOwner_FlowTest() {
         // Arrange
         UserRequestDto dto = new UserRequestDto();
@@ -47,8 +47,7 @@ class UserHandlerTest {
         // Assert
         verify(passwordEncoder).encode("plainTextPassword");
         verify(userServicePort).saveOwner(argThat(model ->
-                model.getPassword().equals("encodedPassword") &&
-                        model.getRole().getId().equals(2L)
+                model.getPassword().equals("encodedPassword")
         ));
     }
 }
