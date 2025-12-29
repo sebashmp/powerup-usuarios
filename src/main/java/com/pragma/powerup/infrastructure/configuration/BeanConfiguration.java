@@ -1,9 +1,11 @@
 package com.pragma.powerup.infrastructure.configuration;
 
 import com.pragma.powerup.domain.api.IUserServicePort;
+import com.pragma.powerup.domain.spi.IPasswordEncoderPort;
 import com.pragma.powerup.domain.spi.IRolePersistencePort;
 import com.pragma.powerup.domain.spi.IUserPersistencePort;
 import com.pragma.powerup.domain.usecase.UserUseCase;
+import com.pragma.powerup.infrastructure.out.jpa.adapter.BCryptPasswordEncoderAdapter;
 import com.pragma.powerup.infrastructure.out.jpa.adapter.RoleJpaAdapter;
 import com.pragma.powerup.infrastructure.out.jpa.adapter.UserJpaAdapter;
 import com.pragma.powerup.infrastructure.out.jpa.mapper.IRoleEntityMapper;
@@ -40,7 +42,12 @@ public class BeanConfiguration {
     }
 
     @Bean
+    public IPasswordEncoderPort passwordEncoderPort() {
+        return new BCryptPasswordEncoderAdapter(passwordEncoder());
+    }
+
+    @Bean
     public IUserServicePort userServicePort() {
-        return new UserUseCase(userPersistencePort(), rolePersistencePort());
+        return new UserUseCase(userPersistencePort(), rolePersistencePort(), passwordEncoderPort());
     }
 }

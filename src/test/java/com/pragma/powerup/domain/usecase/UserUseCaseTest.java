@@ -3,6 +3,7 @@ package com.pragma.powerup.domain.usecase;
 import com.pragma.powerup.domain.exception.DomainException;
 import com.pragma.powerup.domain.model.RoleModel;
 import com.pragma.powerup.domain.model.UserModel;
+import com.pragma.powerup.domain.spi.IPasswordEncoderPort;
 import com.pragma.powerup.domain.spi.IRolePersistencePort;
 import com.pragma.powerup.domain.spi.IUserPersistencePort;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,7 +17,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -27,6 +27,9 @@ class UserUseCaseTest {
 
     @Mock
     private IRolePersistencePort rolePersistencePort;
+
+    @Mock
+    private IPasswordEncoderPort passwordEncoderPort;
 
     @InjectMocks
     private UserUseCase userUseCase;
@@ -53,16 +56,22 @@ class UserUseCaseTest {
     @DisplayName("Should save owner when all validations pass")
     void saveOwner_Success() {
         // Arrange
-        when(rolePersistencePort.getRoleById(2L)).thenReturn(roleModel); // Configurar el mock del rol
+        String plainPassword = "password123";
+        String encryptedPassword = "encrypted123";
+        userModel.setPassword(plainPassword);
+
+        // Stubbing de todas las dependencias del UseCase
+        when(rolePersistencePort.getRoleById(2L)).thenReturn(roleModel);
+        when(passwordEncoderPort.encode(plainPassword)).thenReturn(encryptedPassword);
         when(userPersistencePort.existsByEmail(anyString())).thenReturn(false);
 
         // Act
         userUseCase.saveOwner(userModel);
 
         // Assert
-        assertNotNull(userModel.getRole()); // Verificar que el UseCase asignó el rol
-        assertEquals(2L, userModel.getRole().getId());
-        verify(userPersistencePort, times(1)).saveUser(userModel);
+        assertEquals(encryptedPassword, userModel.getPassword()); // Verificamos que se encriptó
+        assertNotNull(userModel.getRole());
+        verify(userPersistencePort).saveUser(userModel);
     }
 
     @Test
