@@ -20,7 +20,7 @@ public class ControllerAdvisor {
                 .body(Collections.singletonMap("error", ex.getBindingResult().getFieldError().getDefaultMessage()));
     }
 
-    // Maneja tus reglas de negocio (Edad, ID numérico, etc.)
+    // Maneja  reglas de negocio (Edad, ID numérico, etc.)
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<Map<String, String>> handleDomainException(DomainException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

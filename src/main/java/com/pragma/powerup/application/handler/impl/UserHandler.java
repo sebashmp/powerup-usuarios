@@ -25,7 +25,6 @@ public class UserHandler implements IUserHandler {
         UserModel userModel = userRequestMapper.toModel(userRequestDto);
         userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
 
-        // Asignar el Rol de Propietario (ID 2 según nuestro script SQL previo)
         RoleModel roleModel = new RoleModel();
         roleModel.setId(2L);
         userModel.setRole(roleModel);
