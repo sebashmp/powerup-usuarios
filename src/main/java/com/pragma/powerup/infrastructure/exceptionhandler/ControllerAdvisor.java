@@ -1,8 +1,9 @@
 package com.pragma.powerup.infrastructure.exceptionhandler;
 
-import com.pragma.powerup.infrastructure.exception.NoDataFoundException;
+import com.pragma.powerup.domain.exception.DomainException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -12,13 +13,17 @@ import java.util.Map;
 @ControllerAdvice
 public class ControllerAdvisor {
 
-    private static final String MESSAGE = "message";
-
-    @ExceptionHandler(NoDataFoundException.class)
-    public ResponseEntity<Map<String, String>> handleNoDataFoundException(
-            NoDataFoundException ignoredNoDataFoundException) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(Collections.singletonMap(MESSAGE, ExceptionResponse.NO_DATA_FOUND.getMessage()));
+    // Maneja errores de validación de campos (@Email, @NotBlank, etc.)
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap("error", ex.getBindingResult().getFieldError().getDefaultMessage()));
     }
-    
+
+    // Maneja  reglas de negocio (Edad, ID numérico, etc.)
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<Map<String, String>> handleDomainException(DomainException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap("error", ex.getMessage()));
+    }
 }
