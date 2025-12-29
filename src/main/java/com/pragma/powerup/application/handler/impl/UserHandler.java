@@ -4,7 +4,6 @@ import com.pragma.powerup.application.dto.request.UserRequestDto;
 import com.pragma.powerup.application.handler.IUserHandler;
 import com.pragma.powerup.application.mapper.IUserRequestMapper;
 import com.pragma.powerup.domain.api.IUserServicePort;
-import com.pragma.powerup.domain.model.RoleModel;
 import com.pragma.powerup.domain.model.UserModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -24,10 +23,6 @@ public class UserHandler implements IUserHandler {
     public void saveOwner(UserRequestDto userRequestDto) {
         UserModel userModel = userRequestMapper.toModel(userRequestDto);
         userModel.setPassword(passwordEncoder.encode(userModel.getPassword()));
-
-        RoleModel roleModel = new RoleModel();
-        roleModel.setId(2L);
-        userModel.setRole(roleModel);
 
         userServicePort.saveOwner(userModel);
     }
