@@ -30,6 +30,7 @@ public class BeanConfiguration {
     private final IUserEntityMapper userEntityMapper;
     private final IRoleRepository roleRepository;
     private final IRoleEntityMapper roleEntityMapper;
+    private final JwtTokenAdapter jwtTokenAdapter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -43,7 +44,7 @@ public class BeanConfiguration {
 
     @Bean
     public ITokenEncoderPort tokenEncoderPort() {
-        return new JwtTokenAdapter();
+        return jwtTokenAdapter;
     }
 
     @Bean

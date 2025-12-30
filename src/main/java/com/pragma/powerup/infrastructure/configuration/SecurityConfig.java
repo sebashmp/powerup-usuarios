@@ -21,14 +21,12 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeHttpRequests()
-                .antMatchers("/auth/login").permitAll() // Login es público
-                // HU-5: Solo el ADMIN puede crear PROPIETARIOS
+                .antMatchers("/auth/login").permitAll()
                 .antMatchers(HttpMethod.POST, "/users/owner").hasRole("ADMIN")
-                // HU-5: Solo el PROPIETARIO puede crear EMPLEADOS
-                .antMatchers(HttpMethod.POST, "/users/employee").hasRole("PROPIETARIO")
                 .anyRequest().authenticated()
                 .and()
-                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
