@@ -35,6 +35,9 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-security:${springBootVersion}"
 	developmentOnly "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
 	testImplementation "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
+	testImplementation 'com.h2database:h2'
+	implementation 'com.h2database:h2'
 
 	runtimeOnly "mysql:mysql-connector-java:${mySqlConnectorVersion}"
 
@@ -54,6 +57,7 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy jacocoTestReport
 }
 
 jacocoTestReport {
@@ -68,7 +72,14 @@ jacocoTestReport {
 	classDirectories.setFrom(
 			files(classDirectories.files.collect { dir ->
 				fileTree(dir: dir, exclude: [
-						'**/infrastructure/**'
+						'**/infrastructure/**',
+						'**/dto/.*',
+						'**/spi/.*',
+						'**/api/.*',
+						'**/mappers/.*',
+						'**/repository/.*',
+						'**/*.test',
+						'**/generated/.*',
 				])
 			})
 	)

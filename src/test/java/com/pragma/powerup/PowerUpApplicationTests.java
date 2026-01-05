@@ -7,7 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-@SpringBootTest
+@SpringBootTest(properties = "spring.profiles.active=test")
 class PowerUpApplicationTests {
 
     @BeforeAll
