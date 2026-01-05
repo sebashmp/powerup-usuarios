@@ -30,4 +30,10 @@ public class UserHandler implements IUserHandler {
         // Llamamos al dominio y mapeamos el resultado a un DTO de salida
         return userResponseMapper.toResponse(userServicePort.getUser(id));
     }
+
+    @Override
+    public void saveEmployee(UserRequestDto userRequestDto) {
+        UserModel userModel = userRequestMapper.toModel(userRequestDto);
+        userServicePort.saveEmployee(userModel);
+    }
 }

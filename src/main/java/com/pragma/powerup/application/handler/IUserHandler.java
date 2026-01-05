@@ -7,4 +7,6 @@ public interface IUserHandler {
     void saveOwner(UserRequestDto userRequestDto);
 
     UserResponseDto getUserById(Long id);
+
+    void saveEmployee(UserRequestDto userRequestDto);
 }

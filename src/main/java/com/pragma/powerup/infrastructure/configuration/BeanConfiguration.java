@@ -2,16 +2,10 @@ package com.pragma.powerup.infrastructure.configuration;
 
 import com.pragma.powerup.domain.api.IAuthServicePort;
 import com.pragma.powerup.domain.api.IUserServicePort;
-import com.pragma.powerup.domain.spi.IPasswordEncoderPort;
-import com.pragma.powerup.domain.spi.IRolePersistencePort;
-import com.pragma.powerup.domain.spi.ITokenEncoderPort;
-import com.pragma.powerup.domain.spi.IUserPersistencePort;
+import com.pragma.powerup.domain.spi.*;
 import com.pragma.powerup.domain.usecase.AuthUseCase;
 import com.pragma.powerup.domain.usecase.UserUseCase;
-import com.pragma.powerup.infrastructure.out.jpa.adapter.BCryptPasswordEncoderAdapter;
-import com.pragma.powerup.infrastructure.out.jpa.adapter.JwtTokenAdapter;
-import com.pragma.powerup.infrastructure.out.jpa.adapter.RoleJpaAdapter;
-import com.pragma.powerup.infrastructure.out.jpa.adapter.UserJpaAdapter;
+import com.pragma.powerup.infrastructure.out.jpa.adapter.*;
 import com.pragma.powerup.infrastructure.out.jpa.mapper.IRoleEntityMapper;
 import com.pragma.powerup.infrastructure.out.jpa.mapper.IUserEntityMapper;
 import com.pragma.powerup.infrastructure.out.jpa.repository.IRoleRepository;
@@ -61,9 +55,13 @@ public class BeanConfiguration {
     public IAuthServicePort authServicePort() {
         return new AuthUseCase(userPersistencePort(), passwordEncoderPort(), tokenEncoderPort());
     }
+    @Bean
+    public IAuthenticationContextPort authContextPort() {
+        return new AuthenticationContextAdapter();
+    }
 
     @Bean
     public IUserServicePort userServicePort() {
-        return new UserUseCase(userPersistencePort(), rolePersistencePort(), passwordEncoderPort());
+        return new UserUseCase(userPersistencePort(), rolePersistencePort(), passwordEncoderPort(), authContextPort());
     }
 }

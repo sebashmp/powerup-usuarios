@@ -38,4 +38,11 @@ public class UserRestController {
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long id) {
         return ResponseEntity.ok(userHandler.getUserById(id));
     }
+
+    @Operation(summary = "Add a new employee")
+    @PostMapping("/employee")
+    public ResponseEntity<Void> createEmployee(@Valid @RequestBody UserRequestDto userRequestDto) {
+        userHandler.saveEmployee(userRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 }
