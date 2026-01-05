@@ -11,7 +11,7 @@ import java.util.List;
 @Component
 public class JwtProvider {
 
-    @Value("${jwt.secret}")
+    @Value("${JWTSECRET}")
     private String secret;
 
     public boolean validateToken(String token) {

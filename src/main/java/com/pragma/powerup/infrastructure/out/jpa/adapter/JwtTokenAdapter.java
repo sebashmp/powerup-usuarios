@@ -15,7 +15,7 @@ import java.util.Map;
 @Component
 public class JwtTokenAdapter implements ITokenEncoderPort {
 
-    @Value("${jwt.secret}")
+    @Value("${JWTSECRET}")
     private String secret;
 
     @Value("${jwt.expiration}")
