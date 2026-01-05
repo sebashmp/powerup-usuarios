@@ -39,19 +39,28 @@ public class UserUseCase implements IUserServicePort {
     }
 
     private void validateUserCommonRules(UserModel user) {
+
+        if (user.getBirthDate() == null) {
+            throw new DomainException("Birth date is required.");
+        }
+
         if (Period.between(user.getBirthDate(), LocalDate.now()).getYears() < 18) {
             throw new DomainException("The user must be an adult (18+ years old).");
         }
-        if (!user.getIdDocument().matches("\\d+")) {
+
+        if (user.getIdDocument() == null || !user.getIdDocument().matches("\\d+")) {
             throw new DomainException("ID Document must be purely numeric.");
         }
-        if (user.getPhone().length() > 13) {
+
+        if (user.getPhone() == null || user.getPhone().length() > 13) {
             throw new DomainException("Phone number must not exceed 13 characters.");
         }
+
         if (userPersistencePort.existsByEmail(user.getEmail())) {
             throw new DomainException("Email is already registered.");
         }
     }
+
 
     @Override
     public UserModel getUser(Long id) {

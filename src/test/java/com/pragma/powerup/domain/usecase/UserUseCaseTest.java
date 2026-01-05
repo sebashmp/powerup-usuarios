@@ -3,6 +3,7 @@ package com.pragma.powerup.domain.usecase;
 import com.pragma.powerup.domain.exception.DomainException;
 import com.pragma.powerup.domain.model.RoleModel;
 import com.pragma.powerup.domain.model.UserModel;
+import com.pragma.powerup.domain.spi.IAuthenticationContextPort;
 import com.pragma.powerup.domain.spi.IPasswordEncoderPort;
 import com.pragma.powerup.domain.spi.IRolePersistencePort;
 import com.pragma.powerup.domain.spi.IUserPersistencePort;
@@ -31,18 +32,18 @@ class UserUseCaseTest {
     @Mock
     private IPasswordEncoderPort passwordEncoderPort;
 
+    @Mock
+    private IAuthenticationContextPort authContextPort;
+
     @InjectMocks
     private UserUseCase userUseCase;
 
     private UserModel userModel;
-    private RoleModel roleModel;
+    private RoleModel ownerRole;
+    private RoleModel employeeRole;
 
     @BeforeEach
     void setUp() {
-        roleModel = new RoleModel();
-        roleModel.setId(2L);
-        roleModel.setName("ROLE_PROPIETARIO");
-
         userModel = new UserModel();
         userModel.setName("Sebastian");
         userModel.setLastName("Hidalgo");
@@ -50,60 +51,131 @@ class UserUseCaseTest {
         userModel.setPhone("+573001234567");
         userModel.setBirthDate(LocalDate.now().minusYears(20));
         userModel.setEmail("test@mail.com");
+        userModel.setPassword("plainPassword");
+
+        ownerRole = new RoleModel(2L, "ROLE_PROPIETARIO", "Propietario");
+        employeeRole = new RoleModel(3L, "ROLE_EMPLEADO", "Empleado");
     }
 
     @Test
-    @DisplayName("Should save owner when all validations pass")
+    @DisplayName("Should save owner successfully when caller is Admin")
     void saveOwner_Success() {
-        // Arrange
-        String plainPassword = "password123";
-        String encryptedPassword = "encrypted123";
-        userModel.setPassword(plainPassword);
-
-        // Stubbing de todas las dependencias del UseCase
-        when(rolePersistencePort.getRoleById(2L)).thenReturn(roleModel);
-        when(passwordEncoderPort.encode(plainPassword)).thenReturn(encryptedPassword);
+        // Configuramos los mocks solo para lo que este flujo necesita
+        when(authContextPort.getAuthenticatedUserRole()).thenReturn("ROLE_ADMIN");
+        when(rolePersistencePort.getRoleById(2L)).thenReturn(ownerRole);
+        when(passwordEncoderPort.encode(anyString())).thenReturn("encodedPass");
         when(userPersistencePort.existsByEmail(anyString())).thenReturn(false);
 
-        // Act
         userUseCase.saveOwner(userModel);
 
-        // Assert
-        assertEquals(encryptedPassword, userModel.getPassword()); // Verificamos que se encriptó
-        assertNotNull(userModel.getRole());
         verify(userPersistencePort).saveUser(userModel);
+        assertEquals(2L, userModel.getRole().getId());
     }
 
     @Test
     @DisplayName("Should throw exception when user is underage")
     void saveOwner_Underage_ThrowsException() {
         // Arrange
-        when(rolePersistencePort.getRoleById(2L)).thenReturn(roleModel);
-        userModel.setBirthDate(LocalDate.now().minusYears(15));
+        when(authContextPort.getAuthenticatedUserRole()).thenReturn("ROLE_ADMIN");
+        when(rolePersistencePort.getRoleById(2L)).thenReturn(ownerRole);
 
-        // Act & Assert
+        // ponemos fecha de nacimiento que hace al usuario menor
+        userModel.setBirthDate(LocalDate.now().minusYears(16));
+
         assertThrows(DomainException.class, () -> userUseCase.saveOwner(userModel));
+        verify(userPersistencePort, never()).saveUser(any());
     }
 
     @Test
     @DisplayName("Should throw exception when document is not numeric")
     void saveOwner_InvalidDocument_ThrowsException() {
-        // Arrange
-        when(rolePersistencePort.getRoleById(2L)).thenReturn(roleModel);
+        when(authContextPort.getAuthenticatedUserRole()).thenReturn("ROLE_ADMIN");
         userModel.setIdDocument("12345A78");
 
         // Act & Assert
         assertThrows(DomainException.class, () -> userUseCase.saveOwner(userModel));
+
+        verify(userPersistencePort, never()).saveUser(any());
     }
 
     @Test
     @DisplayName("Should throw exception when email already exists")
     void saveOwner_EmailExists_ThrowsException() {
-        // Arrange
-        when(rolePersistencePort.getRoleById(2L)).thenReturn(roleModel);
+        when(authContextPort.getAuthenticatedUserRole()).thenReturn("ROLE_ADMIN");
+        when(rolePersistencePort.getRoleById(2L)).thenReturn(ownerRole);
+        when(passwordEncoderPort.encode(anyString())).thenReturn("encodedPass");
         when(userPersistencePort.existsByEmail(anyString())).thenReturn(true);
 
-        // Act & Assert
         assertThrows(DomainException.class, () -> userUseCase.saveOwner(userModel));
+
+        verify(userPersistencePort, never()).saveUser(any());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when saveOwner is called by non-Admin")
+    void saveOwner_NotAdmin_ThrowsException() {
+        when(authContextPort.getAuthenticatedUserRole()).thenReturn("ROLE_PROPIETARIO");
+
+        assertThrows(DomainException.class, () -> userUseCase.saveOwner(userModel));
+        verify(userPersistencePort, never()).saveUser(any());
+    }
+
+    @Test
+    @DisplayName("Should save employee successfully when caller is a Propietario")
+    void saveEmployee_Success() {
+        // Arrange
+        when(authContextPort.getAuthenticatedUserRole()).thenReturn("ROLE_PROPIETARIO");
+        when(rolePersistencePort.getRoleById(3L)).thenReturn(employeeRole);
+        when(passwordEncoderPort.encode(anyString())).thenReturn("encodedPass");
+        when(userPersistencePort.existsByEmail(anyString())).thenReturn(false);
+
+        // Act
+        userUseCase.saveEmployee(userModel);
+
+        // Assert
+        assertEquals(3L, userModel.getRole().getId());
+        assertEquals("encodedPass", userModel.getPassword());
+        verify(userPersistencePort).saveUser(userModel);
+    }
+
+    @Test
+    @DisplayName("Should throw exception when an ADMIN tries to create an employee")
+    void saveEmployee_CallerIsAdmin_ThrowsException() {
+        // Arrange
+        when(authContextPort.getAuthenticatedUserRole()).thenReturn("ROLE_ADMIN");
+
+        // Act & Assert
+        DomainException exception = assertThrows(DomainException.class,
+                () -> userUseCase.saveEmployee(new UserModel()));
+
+        assertEquals("Only a restaurant owner can create an employee account.", exception.getMessage());
+        verify(userPersistencePort, never()).saveUser(any());
+    }
+
+    @Test
+    @DisplayName("Should throw exception when creating employee with invalid phone")
+    void saveEmployee_InvalidPhone_ThrowsException() {
+        // Arrange
+        UserModel invalidEmployee = new UserModel();
+        invalidEmployee.setPhone("1234567890123456789"); // Muy largo
+        invalidEmployee.setIdDocument("123");
+        invalidEmployee.setPassword("pwd"); // asegurar que password no sea null
+
+        when(authContextPort.getAuthenticatedUserRole()).thenReturn("ROLE_PROPIETARIO");
+        when(rolePersistencePort.getRoleById(3L)).thenReturn(employeeRole);
+
+        // Act & Assert
+        assertThrows(DomainException.class, () -> userUseCase.saveEmployee(invalidEmployee));
+    }
+
+    @Test
+    @DisplayName("Should throw exception when document is not numeric")
+    void saveEmployee_InvalidDocument_ThrowsException() {
+        userModel.setIdDocument("ABC123");
+        when(authContextPort.getAuthenticatedUserRole()).thenReturn("ROLE_PROPIETARIO");
+        when(rolePersistencePort.getRoleById(3L)).thenReturn(employeeRole);
+        when(passwordEncoderPort.encode(anyString())).thenReturn("encodedPass");
+
+        assertThrows(DomainException.class, () -> userUseCase.saveEmployee(userModel));
     }
 }
