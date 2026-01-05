@@ -26,19 +26,13 @@ public class UserUseCase implements IUserServicePort {
 
     @Override
     public void saveOwner(UserModel userModel) {
-        // 1. REGLA DE NEGOCIO: Validar que el que llama sea un Propietario
         String callerRole = authContextPort.getAuthenticatedUserRole();
-        if (!"ROLE_PROPIETARIO".equals(callerRole)) {
-            throw new DomainException("Only a restaurant owner can create an employee account.");
+        if (!"ROLE_ADMIN".equals(callerRole)) {
+            throw new DomainException("Only an admin can create an owner account.");
         }
 
-        // 2. REGLA DE NEGOCIO: Asignar el Rol de Empleado (ID 3)
-        userModel.setRole(rolePersistencePort.getRoleById(3L));
-
-        // 3. REGLA DE NEGOCIO: Encriptar clave antes de guardar
+        userModel.setRole(rolePersistencePort.getRoleById(2L));
         userModel.setPassword(passwordEncoderPort.encode(userModel.getPassword()));
-
-        // 4. Validaciones comunes (Email único, DNI numérico, etc.)
         validateUserCommonRules(userModel);
 
         userPersistencePort.saveUser(userModel);
