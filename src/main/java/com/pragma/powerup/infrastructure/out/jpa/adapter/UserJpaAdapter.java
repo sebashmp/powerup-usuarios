@@ -37,7 +37,8 @@ public class UserJpaAdapter implements IUserPersistencePort {
 
     @Override
     public UserModel findByEmail(String email) {
-        return userRepository.findByEmail(email)
+        // Trim para eliminar espacios accidentales antes de enviar al repositorio
+        return userRepository.findByEmail(email.trim())
                 .map(userEntityMapper::toModel)
                 .orElse(null);
     }
