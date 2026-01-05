@@ -9,4 +9,6 @@ public interface IUserHandler {
     UserResponseDto getUserById(Long id);
 
     void saveEmployee(UserRequestDto userRequestDto);
+
+    void saveClient(UserRequestDto userRequestDto);
 }

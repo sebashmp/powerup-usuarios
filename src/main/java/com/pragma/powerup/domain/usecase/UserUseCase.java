@@ -33,32 +33,10 @@ public class UserUseCase implements IUserServicePort {
 
         userModel.setRole(rolePersistencePort.getRoleById(2L));
         userModel.setPassword(passwordEncoderPort.encode(userModel.getPassword()));
+        validateAdult(userModel);
         validateUserCommonRules(userModel);
 
         userPersistencePort.saveUser(userModel);
-    }
-
-    private void validateUserCommonRules(UserModel user) {
-
-        if (user.getBirthDate() == null) {
-            throw new DomainException("Birth date is required.");
-        }
-
-        if (Period.between(user.getBirthDate(), LocalDate.now()).getYears() < 18) {
-            throw new DomainException("The user must be an adult (18+ years old).");
-        }
-
-        if (user.getIdDocument() == null || !user.getIdDocument().matches("\\d+")) {
-            throw new DomainException("ID Document must be purely numeric.");
-        }
-
-        if (user.getPhone() == null || user.getPhone().length() > 13) {
-            throw new DomainException("Phone number must not exceed 13 characters.");
-        }
-
-        if (userPersistencePort.existsByEmail(user.getEmail())) {
-            throw new DomainException("Email is already registered.");
-        }
     }
 
 
@@ -85,9 +63,54 @@ public class UserUseCase implements IUserServicePort {
         // 3. REGLA DE NEGOCIO: Encriptar clave (Encapsulación de seguridad)
         userModel.setPassword(passwordEncoderPort.encode(userModel.getPassword()));
 
-        // 4. Validaciones de campos (Reutilizamos la lógica de la HU-1)
+        // 4. Validaciones de campos (Reutilizamos la lógica de la HU-1 y el campo de fecha de nacimiento)
+        validateAdult(userModel);
         validateUserCommonRules(userModel);
 
         userPersistencePort.saveUser(userModel);
     }
+
+    @Override
+    public void saveClient(UserModel userModel) {
+        // 1. REGLA DE NEGOCIO: Asignar Rol de Cliente (ID 4 según script SQL)
+        userModel.setRole(rolePersistencePort.getRoleById(4L));
+
+        // 2. REGLA DE NEGOCIO: Encriptar clave
+        userModel.setPassword(passwordEncoderPort.encode(userModel.getPassword()));
+
+        // 3. Validaciones comunes (Email, ID numérico, Teléfono)
+        validateUserCommonRules(userModel);
+
+        userPersistencePort.saveUser(userModel);
+    }
+
+    //Validacion comun entre todos los usuarios
+    private void validateUserCommonRules(UserModel user) {
+
+        if (user.getIdDocument() == null || !user.getIdDocument().matches("\\d+")) {
+            throw new DomainException("ID Document must be purely numeric.");
+        }
+
+        if (user.getPhone() == null || user.getPhone().length() > 13) {
+            throw new DomainException("Phone number must not exceed 13 characters.");
+        }
+
+        if (userPersistencePort.existsByEmail(user.getEmail())) {
+            throw new DomainException("Email is already registered.");
+        }
+    }
+
+    //Para validar si es mayor de edad
+    private void validateAdult(UserModel user) {
+        if (user.getBirthDate() == null) {
+            throw new DomainException("Birth date is required.");
+        }
+
+        if (Period.between(user.getBirthDate(), LocalDate.now()).getYears() < 18) {
+            throw new DomainException("The user must be an adult (18+ years old).");
+        }
+    }
+
+
+
 }

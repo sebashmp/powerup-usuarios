@@ -178,4 +178,21 @@ class UserUseCaseTest {
 
         assertThrows(DomainException.class, () -> userUseCase.saveEmployee(userModel));
     }
+
+    @Test
+    @DisplayName("Should save client successfully (Public Registration)")
+    void saveClient_Success() {
+        // Arrange
+        RoleModel clientRole = new RoleModel(4L, "ROLE_CLIENTE", "Cliente");
+        when(rolePersistencePort.getRoleById(4L)).thenReturn(clientRole);
+        when(passwordEncoderPort.encode(anyString())).thenReturn("encodedPass");
+        when(userPersistencePort.existsByEmail(anyString())).thenReturn(false);
+
+        // Act
+        userUseCase.saveClient(userModel); // 'user' definido en el setUp
+
+        // Assert
+        assertEquals(4L, userModel.getRole().getId());
+        verify(userPersistencePort).saveUser(userModel);
+    }
 }

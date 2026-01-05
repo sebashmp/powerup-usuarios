@@ -45,4 +45,11 @@ public class UserRestController {
         userHandler.saveEmployee(userRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+
+    @Operation(summary = "Add a new client (Public registration)")
+    @PostMapping("/client")
+    public ResponseEntity<Void> saveClient(@Valid @RequestBody UserRequestDto userRequestDto) {
+        userHandler.saveClient(userRequestDto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 }
