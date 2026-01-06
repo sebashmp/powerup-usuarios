@@ -10,6 +10,6 @@ import org.mapstruct.ReportingPolicy;
         unmappedTargetPolicy = ReportingPolicy.IGNORE,
         unmappedSourcePolicy = ReportingPolicy.IGNORE)
 public interface IUserRequestMapper {
-    @Mapping(target = "role", ignore = true) // El rol lo asignamos en el Handler o UseCase
+    @Mapping(target = "role", ignore = true) // El rol lo asignamos en el UseCase
     UserModel toModel(UserRequestDto userRequestDto);
 }

@@ -1,12 +1,14 @@
 package com.pragma.powerup.domain.usecase;
 
 import com.pragma.powerup.domain.api.IUserServicePort;
-import com.pragma.powerup.domain.exception.DomainException; // Crea esta clase
+import com.pragma.powerup.domain.exception.DomainException;
 import com.pragma.powerup.domain.model.UserModel;
 import com.pragma.powerup.domain.spi.IAuthenticationContextPort;
 import com.pragma.powerup.domain.spi.IPasswordEncoderPort;
 import com.pragma.powerup.domain.spi.IRolePersistencePort;
 import com.pragma.powerup.domain.spi.IUserPersistencePort;
+import com.pragma.powerup.domain.util.RoleConstants;
+
 import java.time.LocalDate;
 import java.time.Period;
 
@@ -17,7 +19,10 @@ public class UserUseCase implements IUserServicePort {
     private final IPasswordEncoderPort passwordEncoderPort;
     private final IAuthenticationContextPort authContextPort;
 
-    public UserUseCase(IUserPersistencePort userPersistencePort, IRolePersistencePort rolePersistencePort, IPasswordEncoderPort passwordEncoderPort, IAuthenticationContextPort  authContextPort) {
+    public UserUseCase(IUserPersistencePort userPersistencePort,
+                       IRolePersistencePort rolePersistencePort,
+                       IPasswordEncoderPort passwordEncoderPort,
+                       IAuthenticationContextPort authContextPort) {
         this.userPersistencePort = userPersistencePort;
         this.rolePersistencePort = rolePersistencePort;
         this.passwordEncoderPort = passwordEncoderPort;
@@ -27,18 +32,12 @@ public class UserUseCase implements IUserServicePort {
     @Override
     public void saveOwner(UserModel userModel) {
         String callerRole = authContextPort.getAuthenticatedUserRole();
-        if (!"ROLE_ADMIN".equals(callerRole)) {
+        if (!RoleConstants.ROLE_ADMIN.equals(callerRole)) {
             throw new DomainException("Only an admin can create an owner account.");
         }
 
-        userModel.setRole(rolePersistencePort.getRoleById(2L));
-        userModel.setPassword(passwordEncoderPort.encode(userModel.getPassword()));
-        validateAdult(userModel);
-        validateUserCommonRules(userModel);
-
-        userPersistencePort.saveUser(userModel);
+        prepareAndSave(userModel, RoleConstants.ROLE_ID_PROPIETARIO, true);
     }
-
 
     @Override
     public UserModel getUser(Long id) {
@@ -51,42 +50,40 @@ public class UserUseCase implements IUserServicePort {
 
     @Override
     public void saveEmployee(UserModel userModel) {
-        // 1. REGLA DE NEGOCIO: Validar que el que llama sea un Propietario
         String callerRole = authContextPort.getAuthenticatedUserRole();
-        if (!"ROLE_PROPIETARIO".equals(callerRole)) {
+        if (!RoleConstants.ROLE_PROPIETARIO.equals(callerRole)) {
             throw new DomainException("Only a restaurant owner can create an employee account.");
         }
 
-        // 2. REGLA DE NEGOCIO: Asignar el Rol de Empleado (ID 3 según nuestro script SQL)
-        userModel.setRole(rolePersistencePort.getRoleById(3L));
-
-        // 3. REGLA DE NEGOCIO: Encriptar clave (Encapsulación de seguridad)
-        userModel.setPassword(passwordEncoderPort.encode(userModel.getPassword()));
-
-        // 4. Validaciones de campos (Reutilizamos la lógica de la HU-1 y el campo de fecha de nacimiento)
-        validateAdult(userModel);
-        validateUserCommonRules(userModel);
-
-        userPersistencePort.saveUser(userModel);
+        prepareAndSave(userModel, RoleConstants.ROLE_ID_EMPLEADO, true);
     }
 
     @Override
     public void saveClient(UserModel userModel) {
-        // 1. REGLA DE NEGOCIO: Asignar Rol de Cliente (ID 4 según script SQL)
-        userModel.setRole(rolePersistencePort.getRoleById(4L));
+        prepareAndSave(userModel, RoleConstants.ROLE_ID_CLIENTE, false);
+    }
 
-        // 2. REGLA DE NEGOCIO: Encriptar clave
+    /**
+     * Helper to set role, encode password, run validations and persist the user.
+     *
+     * @param userModel     user to prepare and save
+     * @param roleId        role id to fetch and assign
+     * @param requireAdult  whether to validate adult age
+     */
+    private void prepareAndSave(UserModel userModel, Long roleId, boolean requireAdult) {
+        userModel.setRole(rolePersistencePort.getRoleById(roleId));
         userModel.setPassword(passwordEncoderPort.encode(userModel.getPassword()));
 
-        // 3. Validaciones comunes (Email, ID numérico, Teléfono)
-        validateUserCommonRules(userModel);
+        if (requireAdult) {
+            validateAdult(userModel);
+        }
 
+        validateUserCommonRules(userModel);
         userPersistencePort.saveUser(userModel);
     }
 
-    //Validacion comun entre todos los usuarios
+    // Validación común entre todos los usuarios (ID numérico, teléfono, email único)
     private void validateUserCommonRules(UserModel user) {
-
         if (user.getIdDocument() == null || !user.getIdDocument().matches("\\d+")) {
             throw new DomainException("ID Document must be purely numeric.");
         }
@@ -100,7 +97,7 @@ public class UserUseCase implements IUserServicePort {
         }
     }
 
-    //Para validar si es mayor de edad
+    // Para validar si es mayor de edad
     private void validateAdult(UserModel user) {
         if (user.getBirthDate() == null) {
             throw new DomainException("Birth date is required.");
@@ -110,7 +107,4 @@ public class UserUseCase implements IUserServicePort {
             throw new DomainException("The user must be an adult (18+ years old).");
         }
     }
-
-
-
 }
