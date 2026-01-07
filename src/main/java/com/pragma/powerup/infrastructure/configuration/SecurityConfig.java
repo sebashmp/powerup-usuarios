@@ -23,7 +23,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .antMatchers("/auth/login").permitAll()
                 .antMatchers(HttpMethod.POST, "/users/owner").hasRole("ADMIN")
-                .antMatchers(HttpMethod.GET, "/users/**").hasAnyRole("ADMIN", "PROPIETARIO")
+                .antMatchers(HttpMethod.GET, "/users/**").hasAnyRole("ADMIN", "PROPIETARIO", "EMPLEADO")
                 .antMatchers(HttpMethod.POST, "/users/client").permitAll()
                 .antMatchers(HttpMethod.POST, "/users/employee").hasRole("PROPIETARIO")
                 .anyRequest().authenticated()
