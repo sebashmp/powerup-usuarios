@@ -12,6 +12,8 @@ import com.pragma.powerup.domain.util.RoleConstants;
 import java.time.LocalDate;
 import java.time.Period;
 
+import static com.pragma.powerup.domain.util.UserErrorMessages.*;
+
 public class UserUseCase implements IUserServicePort {
 
     private final IUserPersistencePort userPersistencePort;
@@ -33,7 +35,7 @@ public class UserUseCase implements IUserServicePort {
     public void saveOwner(UserModel userModel) {
         String callerRole = authContextPort.getAuthenticatedUserRole();
         if (!RoleConstants.ROLE_ADMIN.equals(callerRole)) {
-            throw new DomainException("Only an admin can create an owner account.");
+            throw new DomainException(ONLY_ADMIN_CAN_CREATE_OWNER);
         }
 
         prepareAndSave(userModel, RoleConstants.ROLE_ID_PROPIETARIO, true);
@@ -43,7 +45,7 @@ public class UserUseCase implements IUserServicePort {
     public UserModel getUser(Long id) {
         UserModel user = userPersistencePort.getUser(id);
         if (user == null) {
-            throw new DomainException("User not found with ID: " + id);
+            throw new DomainException(USER_NOT_FOUND_PREFIX + id);
         }
         return user;
     }
@@ -52,7 +54,7 @@ public class UserUseCase implements IUserServicePort {
     public void saveEmployee(UserModel userModel) {
         String callerRole = authContextPort.getAuthenticatedUserRole();
         if (!RoleConstants.ROLE_PROPIETARIO.equals(callerRole)) {
-            throw new DomainException("Only a restaurant owner can create an employee account.");
+            throw new DomainException(ONLY_OWNER_CAN_CREATE_EMPLOYEE);
         }
 
         prepareAndSave(userModel, RoleConstants.ROLE_ID_EMPLEADO, true);
@@ -85,26 +87,26 @@ public class UserUseCase implements IUserServicePort {
     // Validación común entre todos los usuarios (ID numérico, teléfono, email único)
     private void validateUserCommonRules(UserModel user) {
         if (user.getIdDocument() == null || !user.getIdDocument().matches("\\d+")) {
-            throw new DomainException("ID Document must be purely numeric.");
+            throw new DomainException(ID_DOCUMENT_NUMERIC_ONLY);
         }
 
         if (user.getPhone() == null || user.getPhone().length() > 13) {
-            throw new DomainException("Phone number must not exceed 13 characters.");
+            throw new DomainException(PHONE_MAX_LENGTH);
         }
 
         if (userPersistencePort.existsByEmail(user.getEmail())) {
-            throw new DomainException("Email is already registered.");
+            throw new DomainException(EMAIL_ALREADY_REGISTERED);
         }
     }
 
     // Para validar si es mayor de edad
     private void validateAdult(UserModel user) {
         if (user.getBirthDate() == null) {
-            throw new DomainException("Birth date is required.");
+            throw new DomainException(BIRTH_DATE_REQUIRED);
         }
 
         if (Period.between(user.getBirthDate(), LocalDate.now()).getYears() < 18) {
-            throw new DomainException("The user must be an adult (18+ years old).");
+            throw new DomainException(USER_MUST_BE_ADULT);
         }
     }
 }

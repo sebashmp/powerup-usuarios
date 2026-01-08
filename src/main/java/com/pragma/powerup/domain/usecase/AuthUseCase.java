@@ -14,6 +14,8 @@ public class AuthUseCase implements IAuthServicePort {
     private final IPasswordEncoderPort passwordEncoderPort;
     private final ITokenEncoderPort tokenEncoderPort;
 
+    public static final String INVALID_CREDENTIALS = "Invalid credentials.";
+
     public AuthUseCase(IUserPersistencePort userPersistencePort,
                        IPasswordEncoderPort passwordEncoderPort,
                        ITokenEncoderPort tokenEncoderPort) {
@@ -24,18 +26,15 @@ public class AuthUseCase implements IAuthServicePort {
 
     @Override
     public JwtModel login(String email, String password) {
-        // 1. Buscar usuario
         UserModel user = userPersistencePort.findByEmail(email);
         if (user == null) {
-            throw new DomainException("Invalid credentials.");
+            throw new DomainException(INVALID_CREDENTIALS);
         }
 
-        // 2. Validar contraseña (La lógica de "intentos ilimitados" simplifica no tener un contador aquí)
         if (!passwordEncoderPort.matches(password, user.getPassword())) {
-            throw new DomainException("Invalid credentials.");
+            throw new DomainException(INVALID_CREDENTIALS);
         }
 
-        // 3. Generar el token a través del puerto SPI
         String token = tokenEncoderPort.generateToken(user);
         return new JwtModel(token);
     }
